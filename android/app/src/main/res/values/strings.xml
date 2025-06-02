@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MeetGrid</string>
+    <string name="title_activity_main">MeetGrid</string>
+    <string name="package_name">meetgrid.app</string>
+    <string name="custom_url_scheme">meetgrid.app</string>
+</resources>
