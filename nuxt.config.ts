@@ -10,6 +10,12 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxt/test-utils'
   ],
+
+  tailwindcss: {
+    configPath: './tailwind.config.js'
+  },
+
+  css: ['~/assets/css/main-minimal.css'],
   
   app: {
     head: {

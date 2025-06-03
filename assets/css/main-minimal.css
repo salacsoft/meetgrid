@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Basic styles without @apply */
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+}

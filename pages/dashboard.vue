@@ -2,10 +2,10 @@
   <div>
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-primary-800 mb-2">
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">
         Welcome back, {{ user?.fullName || user?.username }}!
       </h1>
-      <p class="text-primary-600">
+      <p class="text-gray-600">
         Here's your schedule overview for today and upcoming events.
       </p>
     </div>
@@ -16,7 +16,7 @@
       <div class="lg:col-span-2">
         <div class="bg-white rounded-lg shadow-md p-6">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold text-primary-800">
+            <h2 class="text-xl font-semibold text-gray-800">
               Calendar Overview
             </h2>
             <NuxtLink
@@ -323,8 +323,4 @@ useHead({
 });
 </script>
 
-<style scoped>
-.card {
-  @apply bg-white rounded-lg shadow-md p-6;
-}
-</style>
+
