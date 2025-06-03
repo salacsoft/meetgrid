@@ -164,6 +164,20 @@
           />
         </div>
 
+        <!-- Validation Error -->
+        <div
+          v-if="validationError"
+          class="bg-red-50 border border-red-200 rounded-md p-3"
+        >
+          <div class="flex">
+            <Icon
+              name="heroicons:exclamation-triangle"
+              class="w-5 h-5 text-red-400 mr-2 mt-0.5"
+            />
+            <p class="text-sm text-red-700">{{ validationError }}</p>
+          </div>
+        </div>
+
         <!-- Form Actions -->
         <div class="flex gap-3 pt-4">
           <button
@@ -211,6 +225,10 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  existingEvents: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(["close", "save"]);
@@ -229,6 +247,7 @@ const colorOptions = [
 
 // Form state
 const saving = ref(false);
+const validationError = ref("");
 const eventForm = ref({
   title: "",
   description: "",
@@ -335,14 +354,46 @@ watch(
 
 // Methods
 const closeModal = () => {
+  validationError.value = "";
   emit("close");
+};
+
+// Check for overlapping events
+const checkEventOverlap = (newEventStart, newEventEnd, excludeId = null) => {
+  const newStart = new Date(newEventStart);
+  const newEnd = new Date(newEventEnd);
+
+  for (const event of props.existingEvents) {
+    // Skip the current event if editing
+    if (excludeId && event.id === excludeId) {
+      continue;
+    }
+
+    const existingStart = new Date(event.start);
+    const existingEnd = new Date(event.end || event.start);
+
+    // Check for overlap: events overlap if one starts before the other ends
+    const hasOverlap = newStart < existingEnd && newEnd > existingStart;
+
+    if (hasOverlap) {
+      return {
+        hasOverlap: true,
+        conflictingEvent: event,
+      };
+    }
+  }
+
+  return { hasOverlap: false };
 };
 
 const saveEvent = async () => {
   if (!eventForm.value.title.trim()) {
+    validationError.value = "Event title is required";
     return;
   }
 
+  // Clear previous validation errors
+  validationError.value = "";
   saving.value = true;
 
   try {
@@ -364,7 +415,39 @@ const saveEvent = async () => {
       eventData.start = `${eventForm.value.startDate}T${eventForm.value.startTime}`;
       if (eventForm.value.endDate && eventForm.value.endTime) {
         eventData.end = `${eventForm.value.endDate}T${eventForm.value.endTime}`;
+      } else {
+        // If no end time provided, default to 1 hour later
+        const startTime = new Date(
+          `${eventForm.value.startDate}T${eventForm.value.startTime}`
+        );
+        startTime.setHours(startTime.getHours() + 1);
+        eventData.end = startTime.toISOString();
       }
+    }
+
+    // Validate end time is after start time
+    if (new Date(eventData.end) <= new Date(eventData.start)) {
+      validationError.value = "End time must be after start time";
+      return;
+    }
+
+    // Check for overlapping events
+    const excludeId = props.editingEvent?.id;
+    const overlapCheck = checkEventOverlap(
+      eventData.start,
+      eventData.end,
+      excludeId
+    );
+
+    if (overlapCheck.hasOverlap) {
+      const conflictEvent = overlapCheck.conflictingEvent;
+      const conflictStart = new Date(conflictEvent.start).toLocaleString();
+      const conflictEnd = new Date(
+        conflictEvent.end || conflictEvent.start
+      ).toLocaleString();
+
+      validationError.value = `This event overlaps with "${conflictEvent.title}" (${conflictStart} - ${conflictEnd})`;
+      return;
     }
 
     // Add ID if editing
@@ -375,7 +458,7 @@ const saveEvent = async () => {
     emit("save", eventData);
   } catch (error) {
     console.error("Error saving event:", error);
-    // Handle error (could show toast notification)
+    validationError.value = "An error occurred while saving the event";
   } finally {
     saving.value = false;
   }

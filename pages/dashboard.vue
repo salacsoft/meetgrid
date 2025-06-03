@@ -156,6 +156,7 @@
       :show="showEventModal"
       :initialData="eventModalData"
       :editingEvent="editingEvent"
+      :existingEvents="calendarEvents"
       @close="closeEventModal"
       @save="saveEvent"
     />
