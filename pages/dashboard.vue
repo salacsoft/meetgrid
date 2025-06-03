@@ -17,52 +17,28 @@
         <div class="bg-white rounded-lg shadow-md p-6">
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold text-gray-800">
-              Calendar Overview
+              Interactive Calendar
             </h2>
-            <NuxtLink
-              to="/schedule"
-              class="text-primary-600 hover:text-primary-800 text-sm font-medium"
-            >
-              View Full Calendar →
-            </NuxtLink>
-          </div>
-
-          <!-- Mini Calendar -->
-          <div class="border border-primary-200 rounded-lg p-4">
-            <div class="text-center mb-4">
-              <h3 class="text-lg font-medium text-primary-700">
-                {{ currentMonth }} {{ currentYear }}
-              </h3>
-            </div>
-
-            <!-- Calendar Grid -->
-            <div class="grid grid-cols-7 gap-1 text-sm">
-              <!-- Day headers -->
-              <div
-                v-for="day in dayHeaders"
-                :key="day"
-                class="text-center text-primary-500 font-medium p-2"
+            <div class="flex gap-2">
+              <button
+                @click="createNewEvent"
+                class="bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
               >
-                {{ day }}
-              </div>
-
-              <!-- Calendar days -->
-              <div
-                v-for="date in calendarDates"
-                :key="date.date"
-                class="text-center p-2 rounded cursor-pointer transition-colors"
-                :class="{
-                  'bg-primary-100 text-primary-800 font-semibold': date.isToday,
-                  'text-primary-300': !date.isCurrentMonth,
-                  'text-primary-700': date.isCurrentMonth && !date.isToday,
-                  'bg-primary-50': date.hasEvents,
-                  'hover:bg-primary-50': date.isCurrentMonth,
-                }"
-              >
-                {{ date.day }}
-              </div>
+                <Icon name="heroicons:plus" class="w-4 h-4 inline mr-1" />
+                New Event
+              </button>
             </div>
           </div>
+
+          <!-- FullCalendar Component -->
+          <FullCalendarComponent
+            ref="fullCalendarRef"
+            :events="calendarEvents"
+            :height="500"
+            @dateClick="handleDateClick"
+            @eventClick="handleEventClick"
+            @createEvent="handleCreateEvent"
+          />
         </div>
       </div>
 
@@ -70,47 +46,39 @@
       <div class="space-y-6">
         <!-- Today's Events -->
         <div class="bg-white rounded-lg shadow-md p-6">
-          <h2 class="text-xl font-semibold text-primary-800 mb-4">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">
             Today's Events
           </h2>
 
           <div v-if="todaysEvents.length === 0" class="text-center py-8">
             <Icon
               name="material-symbols:event-available"
-              class="w-12 h-12 text-primary-300 mx-auto mb-2"
+              class="w-12 h-12 text-gray-300 mx-auto mb-2"
             />
-            <p class="text-primary-500">No events today</p>
-            <p class="text-sm text-primary-400">Enjoy your free time!</p>
+            <p class="text-gray-500">No events today</p>
+            <p class="text-sm text-gray-400">Enjoy your free time!</p>
           </div>
 
           <div v-else class="space-y-3">
             <div
               v-for="event in todaysEvents"
               :key="event.id"
-              class="border border-primary-200 rounded-lg p-3"
+              class="rounded-lg p-3 text-white"
+              :style="{ backgroundColor: event.color || '#3b82f6' }"
             >
-              <div class="flex items-start justify-between">
-                <div>
-                  <h3 class="font-medium text-primary-800">
-                    {{ event.title }}
-                  </h3>
-                  <p class="text-sm text-primary-600">
-                    {{ formatEventTime(event.startTime) }}
-                    <span v-if="event.endTime">
-                      - {{ formatEventTime(event.endTime) }}
-                    </span>
-                  </p>
-                  <p
-                    v-if="event.location"
-                    class="text-xs text-primary-500 mt-1"
-                  >
-                    📍 {{ event.location }}
-                  </p>
-                </div>
-                <div
-                  class="w-3 h-3 rounded-full"
-                  :class="`bg-${event.color || 'primary'}-400`"
-                ></div>
+              <div>
+                <h3 class="font-medium">
+                  {{ event.title }}
+                </h3>
+                <p class="text-sm opacity-90">
+                  {{ formatEventTime(event.startTime) }}
+                  <span v-if="event.endTime">
+                    - {{ formatEventTime(event.endTime) }}
+                  </span>
+                </p>
+                <p v-if="event.location" class="text-xs opacity-80 mt-1">
+                  📍 {{ event.location }}
+                </p>
               </div>
             </div>
           </div>
@@ -118,24 +86,24 @@
 
         <!-- Upcoming Events -->
         <div class="bg-white rounded-lg shadow-md p-6">
-          <h2 class="text-xl font-semibold text-primary-800 mb-4">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">
             Upcoming Events
           </h2>
 
           <div v-if="upcomingEvents.length === 0" class="text-center py-4">
-            <p class="text-primary-500">No upcoming events</p>
+            <p class="text-gray-500">No upcoming events</p>
           </div>
 
           <div v-else class="space-y-3">
             <div
               v-for="event in upcomingEvents.slice(0, 5)"
               :key="event.id"
-              class="border-l-4 border-primary-400 pl-3 py-2"
+              class="border-l-4 border-blue-400 pl-3 py-2"
             >
-              <h3 class="font-medium text-primary-800 text-sm">
+              <h3 class="font-medium text-gray-800 text-sm">
                 {{ event.title }}
               </h3>
-              <p class="text-xs text-primary-600">
+              <p class="text-xs text-gray-600">
                 {{ formatEventDate(event.startTime) }}
               </p>
             </div>
@@ -143,7 +111,7 @@
             <NuxtLink
               v-if="upcomingEvents.length > 5"
               to="/schedule"
-              class="block text-center text-primary-600 hover:text-primary-800 text-sm font-medium mt-3"
+              class="block text-center text-gray-600 hover:text-gray-800 text-sm font-medium mt-3"
             >
               View {{ upcomingEvents.length - 5 }} more events →
             </NuxtLink>
@@ -152,55 +120,53 @@
 
         <!-- Quick Actions -->
         <div class="bg-white rounded-lg shadow-md p-6">
-          <h2 class="text-xl font-semibold text-primary-800 mb-4">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">
             Quick Actions
           </h2>
 
           <div class="space-y-3">
             <NuxtLink
-              to="/schedule/new"
-              class="flex items-center p-3 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
-            >
-              <Icon
-                name="material-symbols:add-circle"
-                class="w-5 h-5 text-primary-600 mr-3"
-              />
-              <span class="text-primary-700 font-medium">Create New Event</span>
-            </NuxtLink>
-
-            <NuxtLink
               to="/associations"
-              class="flex items-center p-3 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
+              class="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
             >
               <Icon
                 name="material-symbols:people"
-                class="w-5 h-5 text-primary-600 mr-3"
+                class="w-5 h-5 text-gray-600 mr-3"
               />
-              <span class="text-primary-700 font-medium"
-                >Manage Connections</span
-              >
+              <span class="text-gray-700 font-medium">Manage Connections</span>
             </NuxtLink>
 
             <NuxtLink
               to="/groups"
-              class="flex items-center p-3 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
+              class="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
             >
               <Icon
                 name="material-symbols:group"
-                class="w-5 h-5 text-primary-600 mr-3"
+                class="w-5 h-5 text-gray-600 mr-3"
               />
-              <span class="text-primary-700 font-medium">View Groups</span>
+              <span class="text-gray-700 font-medium">View Groups</span>
             </NuxtLink>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Event Modal -->
+    <EventModal
+      :show="showEventModal"
+      :initialData="eventModalData"
+      :editingEvent="editingEvent"
+      @close="closeEventModal"
+      @save="saveEvent"
+    />
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from "vue";
 import { useAuth } from "~/composables/useAuth";
+import FullCalendarComponent from "~/components/calendar/FullCalendarComponent.vue";
+import EventModal from "~/components/calendar/EventModal.vue";
 
 // Meta
 definePageMeta({
@@ -211,81 +177,132 @@ definePageMeta({
 // Auth
 const { user } = useAuth();
 
-// Calendar data
-const currentDate = new Date();
-const currentMonth = ref(
-  currentDate.toLocaleString("default", { month: "long" })
-);
-const currentYear = ref(currentDate.getFullYear());
+// FullCalendar refs and state
+const fullCalendarRef = ref(null);
+const showEventModal = ref(false);
+const eventModalData = ref(null);
+const editingEvent = ref(null);
 
-const dayHeaders = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+// Calendar events data (will be populated from API calls)
+const calendarEvents = ref([]);
 
-// Mock events data (replace with real data from API later)
-const todaysEvents = ref([
-  {
-    id: 1,
-    title: "Team Standup",
-    startTime: "09:00",
-    endTime: "09:30",
-    color: "blue",
-    location: "Conference Room A",
-  },
-  {
-    id: 2,
-    title: "Client Meeting",
-    startTime: "14:00",
-    endTime: "15:00",
-    color: "green",
-    location: "Online",
-  },
-]);
+// Mock events data for today's events sidebar (derived from calendar events)
+const todaysEvents = computed(() => {
+  const today = new Date().toISOString().split("T")[0];
+  return calendarEvents.value
+    .filter((event) => event.start.startsWith(today))
+    .map((event) => ({
+      id: event.id,
+      title: event.title,
+      startTime: new Date(event.start).toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }),
+      endTime: event.end
+        ? new Date(event.end).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          })
+        : null,
+      color: event.backgroundColor,
+      location: event.extendedProps?.location,
+    }));
+});
 
-const upcomingEvents = ref([
-  {
-    id: 3,
-    title: "Project Review",
-    startTime: new Date(Date.now() + 86400000), // Tomorrow
-  },
-  {
-    id: 4,
-    title: "Weekly Planning",
-    startTime: new Date(Date.now() + 172800000), // Day after tomorrow
-  },
-  {
-    id: 5,
-    title: "Lunch with Sarah",
-    startTime: new Date(Date.now() + 259200000), // 3 days from now
-  },
-]);
+const upcomingEvents = computed(() => {
+  const today = new Date().toISOString().split("T")[0];
+  return calendarEvents.value
+    .filter((event) => event.start > today + "T23:59:59")
+    .map((event) => ({
+      id: event.id,
+      title: event.title,
+      startTime: new Date(event.start),
+    }))
+    .sort((a, b) => a.startTime - b.startTime);
+});
 
-// Calendar generation
-const calendarDates = computed(() => {
-  const year = currentYear.value;
-  const month = currentDate.getMonth();
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-  const startDate = new Date(firstDay);
-  startDate.setDate(startDate.getDate() - firstDay.getDay());
+// Event handlers for FullCalendar
+const handleDateClick = (info) => {
+  console.log("Date clicked:", info.dateStr);
+  // The FullCalendar component already handles showing events for the clicked date
+};
 
-  const dates = [];
-  const today = new Date();
+const handleEventClick = (event) => {
+  console.log("Event clicked:", event);
+  editingEvent.value = event;
+  eventModalData.value = null;
+  showEventModal.value = true;
+};
 
-  for (let i = 0; i < 42; i++) {
-    // 6 weeks
-    const date = new Date(startDate);
-    date.setDate(startDate.getDate() + i);
+const handleCreateEvent = (eventInfo) => {
+  console.log("Create event for:", eventInfo);
+  editingEvent.value = null;
+  eventModalData.value = eventInfo;
+  showEventModal.value = true;
+};
 
-    dates.push({
-      date: date.toISOString().split("T")[0],
-      day: date.getDate(),
-      isCurrentMonth: date.getMonth() === month,
-      isToday: date.toDateString() === today.toDateString(),
-      hasEvents: Math.random() > 0.8, // Mock event indicator
-    });
+const createNewEvent = () => {
+  editingEvent.value = null;
+  eventModalData.value = {
+    start: new Date(),
+    end: new Date(),
+    allDay: false,
+  };
+  showEventModal.value = true;
+};
+
+const closeEventModal = () => {
+  showEventModal.value = false;
+  eventModalData.value = null;
+  editingEvent.value = null;
+};
+
+const saveEvent = (eventData) => {
+  console.log("Saving event:", eventData);
+
+  if (editingEvent.value) {
+    // Update existing event
+    const index = calendarEvents.value.findIndex(
+      (e) => e.id === editingEvent.value.id
+    );
+    if (index !== -1) {
+      calendarEvents.value[index] = {
+        ...eventData,
+        backgroundColor: eventData.color,
+        extendedProps: {
+          description: eventData.description,
+          location: eventData.location,
+          attendees: eventData.attendees,
+        },
+      };
+    }
+  } else {
+    // Create new event
+    const newEvent = {
+      id: String(Date.now()), // Simple ID generation
+      title: eventData.title,
+      start: eventData.start,
+      end: eventData.end,
+      allDay: eventData.allDay,
+      backgroundColor: eventData.color,
+      extendedProps: {
+        description: eventData.description,
+        location: eventData.location,
+        attendees: eventData.attendees,
+      },
+    };
+    calendarEvents.value.push(newEvent);
   }
 
-  return dates;
-});
+  // Refresh the calendar
+  nextTick(() => {
+    fullCalendarRef.value?.refetchEvents();
+  });
+
+  closeEventModal();
+};
 
 // Utility functions
 const formatEventTime = (time) => {
@@ -317,10 +334,8 @@ useHead({
     {
       name: "description",
       content:
-        "Your personal dashboard with calendar overview and upcoming events.",
+        "Your personal dashboard with interactive calendar and upcoming events.",
     },
   ],
 });
 </script>
-
-
